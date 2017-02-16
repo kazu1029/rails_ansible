@@ -1,0 +1,30 @@
+VAGRANTFILE_API_VERSION = "2"
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  # すべてのマシン(app, web, db)で同じ鍵を使う
+  config.ssh.insert_key = false
+
+  config.vm.define "app" do |vagrant|
+    vagrant.vm.box = "ubuntu/trusty64"
+    vagrant.vm.hostname = "app"
+    vagrant.vm.network :private_network, ip: "192.168.43.51"
+    vagrant.vm.network :forwarded_port, guest: 80, host: 8080
+    vagrant.vm.network :forwarded_port, guest: 433, host: 8443
+  end
+
+  config.vm.define "web" do |vagrant|
+    vagrant.vm.box = "ubuntu/trusty64"
+    vagrant.vm.hostname = "web"
+    vagrant.vm.network :private_network, ip: "192.168.43.52"
+    vagrant.vm.network :forwarded_port, guest: 80, host: 8081
+    vagrant.vm.network :forwarded_port, guest: 433, host: 8444
+  end
+
+  config.vm.define "db" do |vagrant|
+    vagrant.vm.box = "ubuntu/trusty64"
+    vagrant.vm.hostname = "db"
+    vagrant.vm.network :private_network, ip: "192.168.43.53"
+    vagrant.vm.network :forwarded_port, guest: 80, host: 8082
+    vagrant.vm.network :forwarded_port, guest: 433, host: 8445
+  end
+
+end
