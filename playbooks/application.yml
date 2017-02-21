@@ -34,24 +34,30 @@
       git: repo=https://github.com/sstephenson/ruby-build.git dest=~/.rbenv/plugins/ruby-build
     - name: Check Ruby already installed
       shell: which ruby
-      register: ruby_install
-      failed_when: ruby_install.rc not in [0, 1]
+      register: ruby_installed
+      failed_when: ruby_installed.rc not in [0, 1]
     - name: Add $PATH to ~/.bashrc
       shell: "{{ item.cmd }}"
       with_items:
         - cmd: echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
         - cmd: echo 'eval "$(rbenv init -)"' >> ~/.bashrc
-      failed_when: ruby_install.rc == 1
-    - name: Install Ruby version "{{ ruby_version }}"
-      command: 'rbenv install "{{ ruby_version }}"'
-      failed_when: ruby_install.rc == 1
+      when: ruby_installed.rc == 1
+    - name: Install Ruby version {{ ruby_version }}
+      shell: rbenv install {{ ruby_version }}
+      when: ruby_installed.rc == 1
     - name: Execute rbenv rehash
-      command: rbenv rehash
+      shell: rbenv rehash
+      when: ruby_installed.rc == 1
     - name: Change global Ruby version
-      command: 'rbenv global "{{ ruby_version }}"'
+      shell: rbenv global {{ ruby_version }}
+      when: ruby_installed.rc == 1
     - name: Execute rbenv rehash
-      command: rbenv rehash
-      #failed_when: ruby_install.rc == 1
+      shell: rbenv rehash
+      when: ruby_installed.rc == 1
+    - name: Reload ~/.bashrc for rbenv
+      become: False
+      shell: echo "source ~/.bashrc"
+      when: ruby_installed.rc == 1
     #
     # Install for node.js
     #
@@ -62,12 +68,12 @@
     - name: Update apt-get
       become: True
       apt: update_cache=yes
-      failed_when: nodejs_installed.rc == 1
+      when: nodejs_installed.rc == 1
     - name: Install Nodejs
       become: True
       apt: name=nodejs state=present
-      failed_when: nodejs_installed.rc == 1
+      when: nodejs_installed.rc == 1
     - name: Install npm
       become: True
       apt: name=npm state=present
-      failed_when: nodejs_installed.rc == 1
+      when: nodejs_installed.rc == 1
