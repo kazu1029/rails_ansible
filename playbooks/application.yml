@@ -58,6 +58,15 @@
       become: False
       shell: echo "source ~/.bashrc"
       when: ruby_installed.rc == 1
+    - name: Install dependencies for Nokogiri
+      apt: name={{ item }} state=present
+      with_items:
+        - patch
+    - name: Install bundler
+      become_user: "{{ root_user }}"
+      gem: name=bundler executable=.rbenv/shims/gem user_install=False
+    - name: Execute rbenv rehash
+      shell: rbenv rehash
     #
     # Install for node.js
     #
