@@ -2,6 +2,7 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # すべてのマシン(app, web, db)で同じ鍵を使う
   config.ssh.insert_key = false
+  config.ssh.forward_agent = true
 
   config.vm.define "app" do |vagrant|
     vagrant.vm.box = "ubuntu/trusty64"
@@ -25,6 +26,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vagrant.vm.network :private_network, ip: "192.168.43.53"
     vagrant.vm.network :forwarded_port, guest: 80, host: 8082
     vagrant.vm.network :forwarded_port, guest: 433, host: 8445
+  end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "application.yml"
+    ansible.inventory_path = "inventory/hosts"
+    ansible.limit = "app"
   end
 
 end

@@ -2,9 +2,9 @@
 - name: Install packages for Rails env
   hosts: app
   vars:
-    ruby_version: 2.3.3
+    ruby_version: 2.2.1
     root_user: root
-    rbenv_root: /usr/local/rbenv
+    rbenv_path: $HOME/.rbenv/bin:$PATH
   tasks:
     #
     # Install rbenv and Ruby
@@ -20,6 +20,7 @@
       apt: name={{ item }}
       with_items:
         - rbenv
+      register: rbenv_changed
     - name: Install dependencies for ruby-build
       become: True
       apt: name={{ item }} state=present
@@ -28,43 +29,62 @@
         - libssl-dev
         - libreadline-dev
         - zlib1g-dev
-    - name: Install ruby-build as rbenv plugin
+        - aptitude
+        - make
+        - libffi-dev
+    - name: Install dependencies for CarrierWave
       become: True
-      become_user: "{{ root_user }}"
-      git: repo=https://github.com/sstephenson/ruby-build.git dest=~/.rbenv/plugins/ruby-build
-    - name: Check Ruby already installed
-      shell: which ruby
-      register: ruby_installed
-      failed_when: ruby_installed.rc not in [0, 1]
+      shell: aptitude -y install {{ item }}
+      with_items:
+        - imagemagick
+        - libmagemagick
+        - libmagickcore
+        - libmagickcore-dev
+        - libmagickwand-dev
+    - name: Install ruby-build as rbenv plugin
+      become: False
+      git: repo=git@github.com:rbenv/ruby-build.git dest=~/.rbenv/plugins/ruby-build accept_hostkey=yes
+    - name: Check rbenv insatlled
+      shell: rbenv -v
+      register: rbenv_installed
     - name: Add $PATH to ~/.bashrc
       shell: "{{ item.cmd }}"
       with_items:
-        - cmd: echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+        - cmd: echo 'export PATH="{{ rbenv_path }}"' >> ~/.bashrc
         - cmd: echo 'eval "$(rbenv init -)"' >> ~/.bashrc
-      when: ruby_installed.rc == 1
+      when: rbenv_changed|changed
+    - name: Check if rbenv global eq {{ ruby_version }}
+      shell: rbenv global
+      register: rbenv_global
     - name: Install Ruby version {{ ruby_version }}
       shell: rbenv install {{ ruby_version }}
-      when: ruby_installed.rc == 1
+      when: rbenv_global.stdout != "{{ ruby_version }}"
+    - name: Check if ruby -v eq {{ ruby_version }}
+      shell: ruby -v
+      register: ruby_used_version
     - name: Execute rbenv rehash
       shell: rbenv rehash
-      when: ruby_installed.rc == 1
+      when: ruby_used_version.stdout != "{{ ruby_version }}"
     - name: Change global Ruby version
       shell: rbenv global {{ ruby_version }}
-      when: ruby_installed.rc == 1
+      when: ruby_used_version.stdout != "{{ ruby_version }}"
     - name: Execute rbenv rehash
       shell: rbenv rehash
-      when: ruby_installed.rc == 1
+      when: ruby_used_version.stdout != "{{ ruby_version }}"
     - name: Reload ~/.bashrc for rbenv
       become: False
       shell: echo "source ~/.bashrc"
-      when: ruby_installed.rc == 1
+      when: ruby_used_version.stdout != "{{ ruby_version }}"
     - name: Install dependencies for Nokogiri
       apt: name={{ item }} state=present
       with_items:
         - patch
-    - name: Install bundler
+    - name: Install bundler and Rails
       become_user: "{{ root_user }}"
-      gem: name=bundler executable=.rbenv/shims/gem user_install=False
+      gem: name={{ item }} executable=.rbenv/shims/gem user_install=False
+      with_items:
+        - bundler
+          #- rails
     - name: Execute rbenv rehash
       shell: rbenv rehash
     #
@@ -86,3 +106,38 @@
       become: True
       apt: name=npm state=present
       when: nodejs_installed.rc == 1
+    #
+    # For WALS App
+    #
+    - name: Check WALS App is Cloned
+      stat: path=/vagrant/wals/app
+      register: is_wals_app
+    - name: Clone WALS App
+      git: repo=git@github.com:Infratop/wals.git dest=/vagrant/wals/ accept_hostkey=yes
+      when: is_wals_app.stat.exists != true
+    #
+    # For Install Redis
+    #
+
+    #
+    # For Install MySQL
+    #
+    - name: Install dependencies for MySQL
+      become: True
+      apt: name={{ item }} state=present
+      with_items:
+        - libmysqlclient-dev
+        - mysql-client-core-5.6
+        - mysql-server-core-5.6
+        - libmysqld-dev
+        - python-mysqldb
+    - name: start MySQL
+      service: name=mysqld state=started enabled=yes
+    - name: create MySQL user
+      mysql_user: name=root password=root priv=*.*:ALL,GRANT state=present
+    - name: Create MySQL database for development
+      mysql_db: name=wals_development login_user=root login_password=root encoding=utf8 state=present
+    - name: Create MySQL database for test
+      mysql_db: name=wals_test login_user=root login_password=root encoding=utf8 state=present
+    - name: restart MySQL
+      service: name=mysql state=restarted enabled=yes
