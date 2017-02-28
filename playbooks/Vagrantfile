@@ -12,21 +12,21 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vagrant.vm.network :forwarded_port, guest: 433, host: 8443
   end
 
-  config.vm.define "web" do |vagrant|
-    vagrant.vm.box = "ubuntu/trusty64"
-    vagrant.vm.hostname = "web"
-    vagrant.vm.network :private_network, ip: "192.168.43.52"
-    vagrant.vm.network :forwarded_port, guest: 80, host: 8081
-    vagrant.vm.network :forwarded_port, guest: 433, host: 8444
-  end
+  #config.vm.define "web" do |vagrant|
+  #  vagrant.vm.box = "ubuntu/trusty64"
+  #  vagrant.vm.hostname = "web"
+  #  vagrant.vm.network :private_network, ip: "192.168.43.52"
+  #  vagrant.vm.network :forwarded_port, guest: 80, host: 8081
+  #  vagrant.vm.network :forwarded_port, guest: 433, host: 8444
+  #end
 
-  config.vm.define "db" do |vagrant|
-    vagrant.vm.box = "ubuntu/trusty64"
-    vagrant.vm.hostname = "db"
-    vagrant.vm.network :private_network, ip: "192.168.43.53"
-    vagrant.vm.network :forwarded_port, guest: 80, host: 8082
-    vagrant.vm.network :forwarded_port, guest: 433, host: 8445
-  end
+  #config.vm.define "db" do |vagrant|
+  #  vagrant.vm.box = "ubuntu/trusty64"
+  #  vagrant.vm.hostname = "db"
+  #  vagrant.vm.network :private_network, ip: "192.168.43.53"
+  #  vagrant.vm.network :forwarded_port, guest: 80, host: 8082
+  #  vagrant.vm.network :forwarded_port, guest: 433, host: 8445
+  #end
 
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "application.yml"

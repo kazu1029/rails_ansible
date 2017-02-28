@@ -116,10 +116,6 @@
       git: repo=git@github.com:Infratop/wals.git dest=/vagrant/wals/ accept_hostkey=yes
       when: is_wals_app.stat.exists != true
     #
-    # For Install Redis
-    #
-
-    #
     # For Install MySQL
     #
     - name: Install dependencies for MySQL
@@ -130,6 +126,7 @@
         - mysql-client-core-5.6
         - mysql-server-core-5.6
         - libmysqld-dev
+        - libmysqlclient-dev
         - python-mysqldb
     - name: start MySQL
       service: name=mysqld state=started enabled=yes
