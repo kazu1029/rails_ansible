@@ -1,6 +1,7 @@
 ---
 - name: Install packages for Rails env
   hosts: app
+  gather_facts: no
   vars:
     ruby_version: 2.2.1
     root_user: root
@@ -9,6 +10,7 @@
     #
     # Install rbenv and Ruby
     #
+    - raw: sudo apt-get update -qq && sudo apt-get install -qq python2.7
     - name: Install dependencies for rbenv
       apt: name={{ item }} state=present
       with_items:
@@ -32,6 +34,7 @@
         - aptitude
         - make
         - libffi-dev
+        - curl
     - name: Install dependencies for CarrierWave
       become: True
       shell: aptitude -y install {{ item }}
@@ -84,7 +87,11 @@
       gem: name={{ item }} executable=.rbenv/shims/gem user_install=False
       with_items:
         - bundler
-          #- rails
+    - name: Install gem rails
+      gem:
+        name: rails
+        version: 4.2.2
+        state: present
     - name: Execute rbenv rehash
       shell: rbenv rehash
     #
@@ -120,21 +127,35 @@
     #
     - name: Install dependencies for MySQL
       become: True
+      apt_repository:
+        repo: deb http://archive.ubuntu.com/ubuntu trusty universe
+        state: present
+    - name: Install dependencies for MySQL
+      become: True
       apt: name={{ item }} state=present
       with_items:
         - libmysqlclient-dev
-        - mysql-client-core-5.6
-        - mysql-server-core-5.6
+        - mysql-server-5.6
+        - mysql-client-5.6
         - libmysqld-dev
-        - libmysqlclient-dev
         - python-mysqldb
     - name: start MySQL
-      service: name=mysqld state=started enabled=yes
+      become: True
+      service: name=mysql state=started enabled=yes
     - name: create MySQL user
-      mysql_user: name=root password=root priv=*.*:ALL,GRANT state=present
+      mysql_user:
+        login_user: root
+        login_password: ''
+        name: root
+        password: root
+        priv: '*.*:ALL,GRANT'
+        state: present
+        password: root
+      ignore_errors: True
     - name: Create MySQL database for development
-      mysql_db: name=wals_development login_user=root login_password=root encoding=utf8 state=present
+      mysql_db: name=wals login_user=root login_password=root encoding=utf8 state=present
     - name: Create MySQL database for test
       mysql_db: name=wals_test login_user=root login_password=root encoding=utf8 state=present
     - name: restart MySQL
+      become: True
       service: name=mysql state=restarted enabled=yes
