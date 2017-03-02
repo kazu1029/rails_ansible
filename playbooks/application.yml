@@ -1,6 +1,6 @@
 ---
 - name: Install packages for Rails env
-  hosts: app
+  hosts: all
   gather_facts: no
   vars:
     ruby_version: 2.2.1
@@ -82,6 +82,7 @@
       apt: name={{ item }} state=present
       with_items:
         - patch
+        - build-essential
     - name: Install bundler and Rails
       become_user: "{{ root_user }}"
       gem: name={{ item }} executable=.rbenv/shims/gem user_install=False
@@ -92,6 +93,15 @@
         name: rails
         version: 4.2.2
         state: present
+        executable: .rbenv/shims/gem
+        user_install: False
+    - name: Install gem nokogiri -v '1.6.8'
+      gem:
+        name: nokogiri
+        version: 1.6.8
+        state: present
+        executable: .rbenv/shims/gem
+        user_install: False
     - name: Execute rbenv rehash
       shell: rbenv rehash
     #
