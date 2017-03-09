@@ -13,13 +13,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vb.memory = "2048"
   end
 
-  $is_windows = RbConfig::CONFIG['host_os'] =~ /mswin|msys|mingw|cygwin|bccwin/i
-  $is_osx = RbConfig::CONFIG['host_os'] =~ /darwin/i
+  #$is_windows = RbConfig::CONFIG['host_os'] =~ /mswin|msys|mingw|cygwin|bccwin/i
+  #$is_osx = RbConfig::CONFIG['host_os'] =~ /darwin/i
 
-  #config.vm.provision "ansible" do |ansible|
-  #  ansible.playbook = "application.yml"
-  #  ansible.inventory_path = "hosts"
-  #  ansible.limit = "all"
-  #end
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "application.yml"
+    ansible.inventory_path = "hosts"
+    ansible.limit = "all"
+  end
 
 end
