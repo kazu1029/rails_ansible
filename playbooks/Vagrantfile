@@ -5,7 +5,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "app" do |vagrant|
     vagrant.vm.box = "ubuntu/xenial64"
     vagrant.vm.network "private_network", ip: "192.168.33.11"
-    vagrant.vm.network :forwarded_port, guest: 3000, host: 3000
+    vagrant.vm.network :forwarded_port, guest: 8000, host: 8000
+    vagrant.vm.network :forwarded_port, guest: 22, host: 2201, id: "ssh"
   end
 
   config.vm.provider "virtualbox" do |vb|
@@ -15,10 +16,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   $is_windows = RbConfig::CONFIG['host_os'] =~ /mswin|msys|mingw|cygwin|bccwin/i
   $is_osx = RbConfig::CONFIG['host_os'] =~ /darwin/i
 
-  config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "application.yml"
-    ansible.inventory_path = "hosts"
-    ansible.limit = "all"
-  end
+  #config.vm.provision "ansible" do |ansible|
+  #  ansible.playbook = "application.yml"
+  #  ansible.inventory_path = "hosts"
+  #  ansible.limit = "all"
+  #end
 
 end
